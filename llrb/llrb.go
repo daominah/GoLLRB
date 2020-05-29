@@ -16,6 +16,11 @@
 //
 package llrb
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Tree is a Left-Leaning Red-Black (LLRB) implementation of 2-3 trees
 type LLRB struct {
 	count int
@@ -28,8 +33,9 @@ type Node struct {
 	Black       bool  // If set, the color of the link (incoming from the parent) is black
 	// In the LLRB, new nodes are always red, hence the zero-value for node
 
-	// For ranking
-	NLeftNodes int
+	// size of the subtree that has root is this Node,
+	// NDescendants == tree_count in for the tree's root Node
+	NDescendants int
 }
 
 type Item interface {
@@ -156,6 +162,7 @@ func (t *LLRB) InsertNoReplaceBulk(items ...Item) {
 // ReplaceOrInsert inserts item into the tree. If an existing
 // element has the same order, it is removed from the tree and returned.
 func (t *LLRB) ReplaceOrInsert(item Item) Item {
+	// TODO: correct NDescendants
 	if item == nil {
 		panic("inserting nil item")
 	}
@@ -207,6 +214,7 @@ func (t *LLRB) insertNoReplace(h *Node, item Item) *Node {
 
 	h = walkDownRot23(h)
 
+	h.NDescendants += 1
 	if less(item, h.Item) {
 		h.Left = t.insertNoReplace(h.Left, item)
 	} else {
@@ -261,6 +269,7 @@ func walkUpRot234(h *Node) *Node {
 // DeleteMin deletes the minimum element in the tree and returns the
 // deleted item or nil otherwise.
 func (t *LLRB) DeleteMin() Item {
+	// TODO: correct NDescendants
 	var deleted Item
 	t.root, deleted = deleteMin(t.root)
 	if t.root != nil {
@@ -294,6 +303,7 @@ func deleteMin(h *Node) (*Node, Item) {
 // DeleteMax deletes the maximum element in the tree and returns
 // the deleted item or nil otherwise
 func (t *LLRB) DeleteMax() Item {
+	// TODO: correct NDescendants
 	var deleted Item
 	t.root, deleted = deleteMax(t.root)
 	if t.root != nil {
@@ -327,6 +337,7 @@ func deleteMax(h *Node) (*Node, Item) {
 // Delete deletes an item from the tree whose key equals key.
 // The deleted item is return, otherwise nil is returned.
 func (t *LLRB) Delete(key Item) Item {
+	// TODO: correct NDescendants
 	var deleted Item
 	t.root, deleted = t.delete(t.root, key)
 	if t.root != nil {
@@ -381,7 +392,12 @@ func (t *LLRB) delete(h *Node, item Item) (*Node, Item) {
 
 // Internal node manipulation routines
 
-func newNode(item Item) *Node { return &Node{Item: item} }
+func newNode(item Item) *Node {
+	return &Node{
+		Item:         item,
+		NDescendants: 1,
+	}
+}
 
 func isRed(h *Node) bool {
 	if h == nil {
@@ -391,6 +407,10 @@ func isRed(h *Node) bool {
 }
 
 func rotateLeft(h *Node) *Node {
+	parentSize := h.NDescendants
+	leftChildSize := size(h.Left)
+	rightChildL1LeftChildL2Size := size(h.Right.Left)
+
 	x := h.Right
 	if x.Black {
 		panic("rotating a black link")
@@ -399,10 +419,18 @@ func rotateLeft(h *Node) *Node {
 	x.Left = h
 	x.Black = h.Black
 	h.Black = false
+
+	x.NDescendants = parentSize
+	h.NDescendants = leftChildSize + rightChildL1LeftChildL2Size + 1
+
 	return x
 }
 
 func rotateRight(h *Node) *Node {
+	parentSize := h.NDescendants
+	rightChildSize := size(h.Right)
+	leftChildL1rightChildL2Size := size(h.Left.Right)
+
 	x := h.Left
 	if x.Black {
 		panic("rotating a black link")
@@ -411,9 +439,14 @@ func rotateRight(h *Node) *Node {
 	x.Right = h
 	x.Black = h.Black
 	h.Black = false
+
+	x.NDescendants = parentSize
+	h.NDescendants = rightChildSize + leftChildL1rightChildL2Size
+
 	return x
 }
 
+// flip changes color of the node and its children,
 // REQUIRE: Left and Right children must be present
 func flip(h *Node) {
 	h.Black = !h.Black
@@ -456,4 +489,133 @@ func fixUp(h *Node) *Node {
 	}
 
 	return h
+}
+
+// size is convenient to get node_NDescendants (node can be nil)
+func size(h *Node) int {
+	if h == nil {
+		return 0
+	}
+	return h.NDescendants
+}
+
+func (h *Node) String() string {
+	if h != nil {
+		return fmt.Sprintf("[k:%v,%v,%v]",
+			h.Item, h.NDescendants, h.Black)
+	} else {
+		return "nil"
+	}
+}
+
+func (t *LLRB) printBFS() string {
+	lines := make([]string, 0)
+	visiteds := make(map[*Node]bool, t.count)
+	type QueueElem struct {
+		node   *Node
+		parent string
+	}
+	q := []QueueElem{{node: t.root, parent: "IAmRoot"}}
+	for len(q) > 0 {
+		pop := q[0]
+		q = q[1:]
+		visiteds[pop.node] = true
+		parentStr := fmt.Sprintf("%v", pop.node.Item)
+		if pop.node.Left != nil {
+			q = append(q, QueueElem{node: pop.node.Left, parent: parentStr})
+		}
+		if pop.node.Right != nil {
+			q = append(q, QueueElem{node: pop.node.Right, parent: parentStr})
+		}
+		line := fmt.Sprintf("parent: %v, node: %v, ", pop.parent, pop.node)
+		lines = append(lines, line)
+	}
+	return strings.Join(lines, "\n")
+}
+
+// GetByRank retrieves an Item with a given rank r (rank start from 1).
+// this func only returns nil if the tree has length 0 or the tree is invalid.
+func (t *LLRB) GetByRank(r int) Item {
+	node := t.getByRank(t.root, r)
+	if node == nil {
+		if r <= 0 {
+			return t.Min()
+		} else { // r > tree_length
+			return t.Max()
+		}
+	}
+	return node.Item
+}
+
+func (t *LLRB) getByRank(h *Node, r int) *Node {
+	hRank := size(h.Left) + 1
+	if r == hRank {
+		return h
+	}
+	if r < hRank {
+		if h.Left == nil { // never expected to reach this branch
+			return nil
+		}
+		return t.getByRank(h.Left, r)
+	}
+	if h.Right == nil { // never expected to reach this branch
+		return nil
+	}
+	return t.getByRank(h.Right, r-hRank)
+}
+
+// GetRankOf determines rank of an key (rank start from 1),
+// this func returns the rank and one Item in the tree that equal to key
+func (t *LLRB) GetRankOf(key Item) (int, Item) {
+	path := t.get(key)
+	//fmt.Println("path: ", path)
+	return t.getRankOf(path, key)
+}
+
+// get returns path from the root to a node whose order is the same as that of key,
+// path[last] is nil if the tree does not contain exact key Item
+func (t *LLRB) get(key Item) []*Node {
+	path := make([]*Node, 0)
+	h := t.root
+	for h != nil {
+		path = append(path, h)
+		switch {
+		case less(key, h.Item):
+			h = h.Left
+		case less(h.Item, key):
+			h = h.Right
+		default: // exactly equal
+			return path
+		}
+	}
+	path = append(path, nil)
+	return path
+}
+
+func (t *LLRB) getRankOf(path []*Node, key Item) (int, Item) {
+	if len(path) < 1 {
+		return 0, nil
+	}
+	foundItem := path[len(path)-1]
+	var r int
+	if foundItem != nil {
+		r = size(foundItem.Left) + 1
+	} else { // return rank of nearest parent node for non-existed item
+		if len(path) < 2 {
+			return 0, nil
+		}
+		r = size(path[len(path)-2].Left) + 1
+	}
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i] == nil {
+			continue
+		}
+		if i-1 < 0 || path[i-1] == nil {
+			continue
+		}
+		if path[i] == path[i-1].Right { // if current node is a right node
+			r += size(path[i-1].Left) + 1 // add size of the left sibling to the rank
+		}
+	}
+	return r, foundItem
 }

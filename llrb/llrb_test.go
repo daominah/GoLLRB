@@ -237,3 +237,42 @@ func TestInsertNoReplace(t *testing.T) {
 		return true
 	})
 }
+
+func TestNDescendants(t *testing.T) {
+	tree := New()
+	for i := 1; i <= 10; i++ {
+		tree.InsertNoReplace(Int(2 * i))
+	}
+	//t.Log(tree.printBFS())
+	if tree.root.NDescendants != 10 ||
+		tree.root.Left.NDescendants != 3 ||
+		tree.root.Right.NDescendants != 6 ||
+		tree.root.Left.Left.NDescendants != 1 ||
+		tree.root.Left.Right.NDescendants != 1 ||
+		tree.root.Right.Left.NDescendants != 3 ||
+		tree.root.Right.Right.NDescendants != 2 ||
+		tree.root.Right.Left.Left.NDescendants != 1 ||
+		tree.root.Right.Left.Right.NDescendants != 1 ||
+		tree.root.Right.Right.Left.NDescendants != 1 {
+		t.Error(tree.printBFS())
+	}
+
+	for i := 1; i <= 10; i++ {
+		if reality := tree.GetByRank(i); reality.(Int) != Int(2*i) {
+			t.Error(i, reality)
+		}
+	}
+
+	for i := 1; i <= 10; i++ {
+		item := Int(2 * i)
+		r, foundItem := tree.GetRankOf(item)
+		//t.Logf("item: %v, rank: %v, foundItem: %v", item, r, foundItem)
+		if r != i || foundItem == nil {
+			t.Error(i, r, foundItem)
+		}
+	}
+}
+
+func BenchmarkLLRB_Rank(b *testing.B) {
+	// TODO: write BenchmarkLLRB_Rank
+}
