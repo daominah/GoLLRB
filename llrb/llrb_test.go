@@ -271,6 +271,15 @@ func TestNDescendants(t *testing.T) {
 			t.Error(i, r, foundItem)
 		}
 	}
+
+	r, foundItem := tree.GetRankOf(Int(17))
+	if foundItem != nil || r != 9 {
+		t.Error(r, foundItem, foundItem == nil)
+	}
+	r, foundItem = tree.GetRankOf(Int(5))
+	if foundItem != nil || r != 3 {
+		t.Error(r, foundItem)
+	}
 }
 
 func BenchmarkLLRB_Rank(b *testing.B) {
