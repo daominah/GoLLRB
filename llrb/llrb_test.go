@@ -285,3 +285,22 @@ func TestNDescendants(t *testing.T) {
 func BenchmarkLLRB_Rank(b *testing.B) {
 	// TODO: write BenchmarkLLRB_Rank
 }
+
+func TestLLRB_Delete(t *testing.T) {
+	tree := New()
+	for i := 1; i <= 10; i++ {
+		tree.InsertNoReplace(Int(2 * i))
+	}
+	tree.Delete(Int(18))
+	if tree.root.NDescendants != 9 {
+		t.Errorf("root.NDescendants: expect 9, reality: %v", tree.root.NDescendants)
+	}
+	if tree.root.Right.NDescendants != 5 {
+		t.Errorf("root.Right.Right.NDescendants: expect 5, reality: %v",
+			tree.root.Right.NDescendants)
+	}
+	if tree.root.Right.Right.NDescendants != 1 {
+		t.Errorf("root.Right.Right.NDescendants: expect 1, reality: %v",
+			tree.root.Right.Right.NDescendants)
+	}
+}
