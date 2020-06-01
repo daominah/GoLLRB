@@ -293,8 +293,17 @@ func TestLLRB_RankEmpty(t *testing.T) {
 	}
 }
 
-func BenchmarkLLRB_Rank(b *testing.B) {
-	// TODO: write BenchmarkLLRB_Rank
+func BenchmarkLLRB_GetRankOf(b *testing.B) {
+	b.StopTimer()
+	tree := New()
+	for i := 0; i < b.N; i++ {
+		tree.InsertNoReplace(Int(i))
+	}
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		tree.GetRankOf(Int(i))
+		tree.GetByRank(rand.Intn(b.N))
+	}
 }
 
 func TestLLRB_Delete(t *testing.T) {
