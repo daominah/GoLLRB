@@ -522,10 +522,10 @@ func (t *LLRB) printBFS() string {
 		q = q[1:]
 		visiteds[pop.node] = true
 		parentStr := fmt.Sprintf("%v", pop.node.Item)
-		if pop.node.Left != nil {
+		if pop.node.Left != nil && !visiteds[pop.node.Left] {
 			q = append(q, QueueElem{node: pop.node.Left, parent: parentStr})
 		}
-		if pop.node.Right != nil {
+		if pop.node.Right != nil && !visiteds[pop.node.Right] {
 			q = append(q, QueueElem{node: pop.node.Right, parent: parentStr})
 		}
 		line := fmt.Sprintf("parent: %v, node: %v, ", pop.parent, pop.node)
@@ -569,7 +569,8 @@ func (t *LLRB) getByRank(h *Node, r int) *Node {
 }
 
 // GetRankOf determines rank of an key (rank start from 1),
-// this func returns the rank and one Item in the tree that equal to key
+// this func returns the rank and one Item in the tree that equal to key,
+// in case key does not exist, this func returns approximate rank and nil Item.
 func (t *LLRB) GetRankOf(key Item) (int, Item) {
 	path := t.get(key)
 	//fmt.Println("path: ", path)
@@ -620,6 +621,9 @@ func (t *LLRB) getRankOf(path []*Node, key Item) (int, Item) {
 		if path[i] == path[i-1].Right { // if current node is a right node
 			r += size(path[i-1].Left) + 1 // add size of the left sibling to the rank
 		}
+	}
+	if foundItem == nil { // workaround for Go nil interface
+		return r, nil
 	}
 	return r, foundItem
 }
