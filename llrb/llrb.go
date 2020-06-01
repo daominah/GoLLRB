@@ -21,7 +21,8 @@ import (
 	"strings"
 )
 
-// Tree is a Left-Leaning Red-Black (LLRB) implementation of 2-3 trees
+// LLRB is an order statistic tree,
+// this is an augmented Left-Leaning Red-Black (LLRB) implementation of 2-3 trees
 type LLRB struct {
 	count int
 	root  *Node
@@ -548,6 +549,9 @@ func (t *LLRB) GetByRank(r int) Item {
 }
 
 func (t *LLRB) getByRank(h *Node, r int) *Node {
+	if h == nil {
+		return nil
+	}
 	hRank := size(h.Left) + 1
 	if r == hRank {
 		return h

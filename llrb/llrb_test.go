@@ -273,6 +273,17 @@ func TestNDescendants(t *testing.T) {
 	}
 }
 
+func TestLLRB_RankEmpty(t *testing.T) {
+	tree := New()
+	if tree.GetByRank(10) != nil {
+		t.Error()
+	}
+	rank, item := tree.GetRankOf(Int(10))
+	if rank != 0 || item != nil {
+		t.Error()
+	}
+}
+
 func BenchmarkLLRB_Rank(b *testing.B) {
 	// TODO: write BenchmarkLLRB_Rank
 }
