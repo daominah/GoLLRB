@@ -442,7 +442,7 @@ func rotateRight(h *Node) *Node {
 	h.Black = false
 
 	x.NDescendants = parentSize
-	h.NDescendants = rightChildSize + leftChildL1rightChildL2Size
+	h.NDescendants = rightChildSize + leftChildL1rightChildL2Size + 1
 
 	return x
 }
