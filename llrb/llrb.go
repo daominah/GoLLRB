@@ -270,7 +270,6 @@ func walkUpRot234(h *Node) *Node {
 // DeleteMin deletes the minimum element in the tree and returns the
 // deleted item or nil otherwise.
 func (t *LLRB) DeleteMin() Item {
-	// TODO: correct NDescendants
 	var deleted Item
 	t.root, deleted = deleteMin(t.root)
 	if t.root != nil {
@@ -282,19 +281,24 @@ func (t *LLRB) DeleteMin() Item {
 	return deleted
 }
 
-// deleteMin code for LLRB 2-3 trees
+// deleteMin code for LLRB 2-3 trees,
 func deleteMin(h *Node) (*Node, Item) {
+	// empty tree
 	if h == nil {
 		return nil, nil
 	}
+	// subtree rooted at h has only one node
 	if h.Left == nil {
 		return nil, h.Item
 	}
 
 	if !isRed(h.Left) && !isRed(h.Left.Left) {
+		// moveRedLeft is a combination of rotating funcs,
+		// NDescendants is handled in rotating
 		h = moveRedLeft(h)
 	}
 
+	h.NDescendants--
 	var deleted Item
 	h.Left, deleted = deleteMin(h.Left)
 
@@ -304,7 +308,6 @@ func deleteMin(h *Node) (*Node, Item) {
 // DeleteMax deletes the maximum element in the tree and returns
 // the deleted item or nil otherwise
 func (t *LLRB) DeleteMax() Item {
-	// TODO: correct NDescendants
 	var deleted Item
 	t.root, deleted = deleteMax(t.root)
 	if t.root != nil {
@@ -323,12 +326,15 @@ func deleteMax(h *Node) (*Node, Item) {
 	if isRed(h.Left) {
 		h = rotateRight(h)
 	}
+	// subtree rooted at h has only one node
 	if h.Right == nil {
 		return nil, h.Item
 	}
 	if !isRed(h.Right) && !isRed(h.Right.Left) {
 		h = moveRedRight(h)
 	}
+
+	h.NDescendants--
 	var deleted Item
 	h.Right, deleted = deleteMax(h.Right)
 
@@ -448,6 +454,7 @@ func rotateRight(h *Node) *Node {
 }
 
 // flip changes color of the node and its children,
+// only nodes's color are changed, nodes's NDescendants are unchanged,
 // REQUIRE: Left and Right children must be present
 func flip(h *Node) {
 	h.Black = !h.Black

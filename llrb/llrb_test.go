@@ -330,3 +330,64 @@ func TestLLRB_Delete(t *testing.T) {
 			tree.root.Right.Right.NDescendants)
 	}
 }
+
+func TestLLRB_DeleteMin(t *testing.T) {
+	tree := New()
+	tree.InsertNoReplace(Int(2))
+	tree.InsertNoReplace(Int(4))
+	//t.Log(tree.printBFS())
+	tree.DeleteMin()
+	if tree.root.NDescendants != 1 {
+		t.Errorf("expect %v, reality: %v", 1, tree.root.NDescendants)
+		t.Log(tree.printBFS())
+	}
+}
+
+func TestLLRB_DeleteMin2(t *testing.T) {
+	tree := New()
+	shuffle := []Int{6, 2, 10, 8, 4}
+	for _, e := range shuffle {
+		tree.InsertNoReplace(e)
+	}
+
+	tree.DeleteMin()
+	if tree.root.NDescendants != 4 ||
+		tree.root.Left.NDescendants != 1 {
+		t.Error(tree.printBFS())
+	}
+
+	tree.DeleteMin()
+	if tree.root.NDescendants != 3 ||
+		tree.root.Left.NDescendants != 1 {
+		t.Error(tree.printBFS())
+	}
+}
+
+func TestLLRB_DeleteMax(t *testing.T) {
+	tree := New()
+	tree.InsertNoReplace(Int(2))
+	tree.InsertNoReplace(Int(4))
+	//t.Log(tree.printBFS())
+	tree.DeleteMax()
+	if tree.root.NDescendants != 1 {
+		t.Errorf(tree.printBFS())
+	}
+}
+
+func TestLLRB_DeleteMax2(t *testing.T) {
+	tree := New()
+	shuffle := []Int{6, 2, 10, 8, 4}
+	for _, e := range shuffle {
+		tree.InsertNoReplace(e)
+	}
+	tree.DeleteMax()
+	if tree.root.NDescendants != 4 ||
+		tree.root.Right.NDescendants != 1 {
+		t.Error(tree.printBFS())
+	}
+	tree.DeleteMax()
+	if tree.root.NDescendants != 3 ||
+		tree.root.Left.NDescendants != 1 {
+		t.Error(tree.printBFS())
+	}
+}
