@@ -186,8 +186,14 @@ func (t *LLRB) replaceOrInsert(h *Node, item Item) (*Node, Item) {
 	var replaced Item
 	if less(item, h.Item) { // BUG
 		h.Left, replaced = t.replaceOrInsert(h.Left, item)
+		if replaced == nil {
+			h.NDescendants++
+		}
 	} else if less(h.Item, item) {
 		h.Right, replaced = t.replaceOrInsert(h.Right, item)
+		if replaced == nil {
+			h.NDescendants++
+		}
 	} else {
 		replaced, h.Item = h.Item, item
 	}
@@ -227,6 +233,7 @@ func (t *LLRB) insertNoReplace(h *Node, item Item) *Node {
 
 // Rotation driver routines for 2-3 algorithm
 
+// walkDownRot23 does nothing
 func walkDownRot23(h *Node) *Node { return h }
 
 func walkUpRot23(h *Node) *Node {

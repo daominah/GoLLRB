@@ -447,3 +447,29 @@ func TestLLRB_DeleteMax2(t *testing.T) {
 		t.Error(tree.stringBFS())
 	}
 }
+
+func TestLLRB_ReplaceOrInsert(t *testing.T) {
+	array := []Int{22, 11, 13, 6, 9, 12, 4, 7, 1, 23, 13, 1, 18, 10, 18, 8, 19,
+		16, 15, 4, 19, 10, 24, 2, 9, 9, 5, 25, 1, 6, 2, 7, 18, 20, 4}
+	// sorted(set(a)): [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 18, 19, 20, 22, 23, 24, 25]
+
+	tree := New()
+	for _, e := range array {
+		tree.ReplaceOrInsert(e)
+	}
+	if tree.root.NDescendants != 21 {
+		t.Errorf("tree.root.NDescendants: r: %v, e: %v", tree.root.NDescendants, 21)
+	}
+	if r, _ := tree.GetRankOf(Int(25)); r != 21 {
+		t.Errorf("RankOf(Int(25)): r: %v, e: %v", r, 21)
+	}
+	if r, _ := tree.GetRankOf(Int(4)); r != 3 {
+		t.Errorf("RankOf(Int(4)): r: %v, e: %v", r, 3)
+	}
+	if r, _ := tree.GetRankOf(Int(16)); r != 14 {
+		t.Errorf("RankOf(Int(25)): r: %v, e: %v", r, 14)
+	}
+	if r, _ := tree.GetRankOf(Int(3)); r != 3 {
+		t.Errorf("RankOf(Int(3)): r: %v, e: %v", r, 3)
+	}
+}
