@@ -243,12 +243,13 @@ func TestNDescendants(t *testing.T) {
 		[]Int{2, 4, 6, 8, 10, 12, 14, 16, 18, 20},
 		[]Int{16, 2, 20, 10, 8, 14, 6, 4, 12, 18},
 	} {
-		t.Log("outerIdx:", outerIdx)
+		//t.Log("outerIdx:", outerIdx)
+		_ = outerIdx
 		tree := New()
 		for i := 1; i <= 10; i++ {
 			tree.InsertNoReplace(shuffle[i-1])
 		}
-		//t.Log(tree.printBFS())
+		//t.Log(tree.stringBFS())
 		if tree.root.NDescendants != 10 ||
 			tree.root.Left.NDescendants != 3 ||
 			tree.root.Right.NDescendants != 6 ||
@@ -259,7 +260,7 @@ func TestNDescendants(t *testing.T) {
 			tree.root.Right.Left.Left.NDescendants != 1 ||
 			tree.root.Right.Left.Right.NDescendants != 1 ||
 			tree.root.Right.Right.Left.NDescendants != 1 {
-			t.Error(tree.printBFS())
+			t.Error(tree.stringBFS())
 		}
 
 		for i := 1; i <= 10; i++ {
@@ -317,7 +318,14 @@ func TestLLRB_Delete(t *testing.T) {
 	for i := 1; i <= 10; i++ {
 		tree.InsertNoReplace(Int(2 * i))
 	}
-	tree.Delete(Int(18))
+	deleted := tree.Delete(Int(18))
+	if deleted == nil {
+		t.Fatal()
+	}
+	deleted = tree.Delete(Int(17))
+	if deleted != nil {
+		t.Fatal()
+	}
 	if tree.root.NDescendants != 9 {
 		t.Errorf("root.NDescendants: expect 9, reality: %v", tree.root.NDescendants)
 	}
@@ -329,17 +337,65 @@ func TestLLRB_Delete(t *testing.T) {
 		t.Errorf("root.Right.Right.NDescendants: expect 1, reality: %v",
 			tree.root.Right.Right.NDescendants)
 	}
+	//t.Log(tree.stringBFS())
+	deleted = tree.Delete(Int(12))
+	if deleted == nil {
+		t.Fatal()
+	}
+	if tree.root.NDescendants != 8 || // item 8
+		tree.root.Right.NDescendants != 4 || // item 16
+		tree.root.Right.Right.NDescendants != 1 || // item 20
+		tree.root.Right.Left.NDescendants != 2 { // item 14
+		t.Error(tree.stringBFS())
+	}
+}
+
+func TestLLRB_Delete2(t *testing.T) {
+	tree := New()
+	for _, e := range []Int{32, 12, 4, 24, 2} {
+		tree.InsertNoReplace(e)
+	}
+	tree.Delete(Int(4))
+	for _, e := range []Int{14, 8, 36, 20, 34} {
+		tree.InsertNoReplace(e)
+	}
+	tree.Delete(Int(20))
+	for _, e := range []Int{40, 16, 30, 28, 26} {
+		tree.InsertNoReplace(e)
+	}
+	tree.Delete(Int(26))
+	tree.InsertNoReplace(Int(20))
+	for _, e := range []Int{10, 38, 22, 18, 6} {
+		tree.InsertNoReplace(e)
+	}
+	tree.Delete(Int(38))
+	for _, c := range []struct {
+		item Int
+		rank int
+	}{
+		{item: 2, rank: 1}, {item: 6, rank: 2}, {item: 8, rank: 3},
+		{item: 10, rank: 4}, {item: 12, rank: 5}, {item: 14, rank: 6},
+		{item: 16, rank: 7}, {item: 18, rank: 8}, {item: 20, rank: 9},
+		{item: 22, rank: 10}, {item: 24, rank: 11}, {item: 28, rank: 12},
+		{item: 30, rank: 13}, {item: 32, rank: 14}, {item: 34, rank: 15},
+		{item: 36, rank: 16}, {item: 40, rank: 17},
+	} {
+		r, _ := tree.GetRankOf(c.item)
+		if r != c.rank {
+			t.Errorf("item: %v, expected: %v, reality: %v", c.item, c.rank, r)
+		}
+	}
 }
 
 func TestLLRB_DeleteMin(t *testing.T) {
 	tree := New()
 	tree.InsertNoReplace(Int(2))
 	tree.InsertNoReplace(Int(4))
-	//t.Log(tree.printBFS())
+	//t.Log(tree.stringBFS())
 	tree.DeleteMin()
 	if tree.root.NDescendants != 1 {
 		t.Errorf("expect %v, reality: %v", 1, tree.root.NDescendants)
-		t.Log(tree.printBFS())
+		t.Log(tree.stringBFS())
 	}
 }
 
@@ -353,13 +409,13 @@ func TestLLRB_DeleteMin2(t *testing.T) {
 	tree.DeleteMin()
 	if tree.root.NDescendants != 4 ||
 		tree.root.Left.NDescendants != 1 {
-		t.Error(tree.printBFS())
+		t.Error(tree.stringBFS())
 	}
 
 	tree.DeleteMin()
 	if tree.root.NDescendants != 3 ||
 		tree.root.Left.NDescendants != 1 {
-		t.Error(tree.printBFS())
+		t.Error(tree.stringBFS())
 	}
 }
 
@@ -367,10 +423,10 @@ func TestLLRB_DeleteMax(t *testing.T) {
 	tree := New()
 	tree.InsertNoReplace(Int(2))
 	tree.InsertNoReplace(Int(4))
-	//t.Log(tree.printBFS())
+	//t.Log(tree.stringBFS())
 	tree.DeleteMax()
 	if tree.root.NDescendants != 1 {
-		t.Errorf(tree.printBFS())
+		t.Errorf(tree.stringBFS())
 	}
 }
 
@@ -383,11 +439,11 @@ func TestLLRB_DeleteMax2(t *testing.T) {
 	tree.DeleteMax()
 	if tree.root.NDescendants != 4 ||
 		tree.root.Right.NDescendants != 1 {
-		t.Error(tree.printBFS())
+		t.Error(tree.stringBFS())
 	}
 	tree.DeleteMax()
 	if tree.root.NDescendants != 3 ||
 		tree.root.Left.NDescendants != 1 {
-		t.Error(tree.printBFS())
+		t.Error(tree.stringBFS())
 	}
 }

@@ -344,7 +344,6 @@ func deleteMax(h *Node) (*Node, Item) {
 // Delete deletes an item from the tree whose key equals key.
 // The deleted item is return, otherwise nil is returned.
 func (t *LLRB) Delete(key Item) Item {
-	// TODO: correct NDescendants
 	var deleted Item
 	t.root, deleted = t.delete(t.root, key)
 	if t.root != nil {
@@ -356,6 +355,7 @@ func (t *LLRB) Delete(key Item) Item {
 	return deleted
 }
 
+// I will correct h_NDescendants after calling delete on left or right subtree
 func (t *LLRB) delete(h *Node, item Item) (*Node, Item) {
 	var deleted Item
 	if h == nil {
@@ -369,6 +369,9 @@ func (t *LLRB) delete(h *Node, item Item) (*Node, Item) {
 			h = moveRedLeft(h)
 		}
 		h.Left, deleted = t.delete(h.Left, item)
+		if deleted != nil { // the deleting only changes h_Left subtree
+			h.NDescendants--
+		}
 	} else {
 		if isRed(h.Left) {
 			h = rotateRight(h)
@@ -388,9 +391,13 @@ func (t *LLRB) delete(h *Node, item Item) (*Node, Item) {
 			if subDeleted == nil {
 				panic("logic")
 			}
+			h.NDescendants--
 			deleted, h.Item = h.Item, subDeleted
 		} else { // Else, @item is bigger than @h.Item
 			h.Right, deleted = t.delete(h.Right, item)
+			if deleted != nil { // the deleting only changes h_Right subtree
+				h.NDescendants--
+			}
 		}
 	}
 
@@ -516,7 +523,7 @@ func (h *Node) String() string {
 	}
 }
 
-func (t *LLRB) printBFS() string {
+func (t *LLRB) stringBFS() string {
 	lines := make([]string, 0)
 	visiteds := make(map[*Node]bool, t.count)
 	type QueueElem struct {
